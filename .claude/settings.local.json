@@ -1,7 +1,24 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm create *)"
+      "Bash(pnpm create *)",
+      "Bash(rm /c/Users/bennyg/web-projects/nxtlk/src/app/page.tsx)",
+      "Bash(mkdir -p /c/Users/bennyg/web-projects/nxtlk/src/app/\\\\\\(auth\\\\\\)/login /c/Users/bennyg/web-projects/nxtlk/src/app/\\\\\\(chat\\\\\\)/chat /c/Users/bennyg/web-projects/nxtlk/src/components/sidebar /c/Users/bennyg/web-projects/nxtlk/src/components/chat /c/Users/bennyg/web-projects/nxtlk/src/components/ui /c/Users/bennyg/web-projects/nxtlk/src/lib /c/Users/bennyg/web-projects/nxtlk/src/styles)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm build *)",
+      "Bash(node *)",
+      "Bash(pnpm dev *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/chat)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/login)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(pnpm exec *)",
+      "Bash(npx tsx *)",
+      "PowerShell(supabase *)",
+      "PowerShell(Get-Content \"C:\\\\Users\\\\bennyg\\\\web-projects\\\\nxtlk\\\\.env.local\" | Where-Object { $_ -match \"DATABASE_URL\" })",
+      "Bash(npx tsc *)",
+      "Bash(Remove-Item *)",
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\bennyg\\\\web-projects\\\\nxtlk\\\\src\\\\app\\\\\\(chat\\)\\\\settings\\\\\" -Recurse | Select-Object FullName *)"
     ]
-  }
+  },
+  "spinnerTipsEnabled": true
 }

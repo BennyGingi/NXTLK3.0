@@ -323,84 +323,86 @@ export default function RegisterPage() {
             Free forever. No credit card required.
           </p>
 
-          <InputField
-            type="text"
-            value={fullName}
-            onChange={v => { setFullName(v); clearFieldError("fullName"); }}
-            placeholder="Benny Gingi"
-            label="Full name"
-            icon={<User size={15} />}
-            delay="0.2s"
-            error={errors.fullName}
-          />
+          <form onSubmit={e => { e.preventDefault(); handleSubmit(); }}>
+            <InputField
+              type="text"
+              value={fullName}
+              onChange={v => { setFullName(v); clearFieldError("fullName"); }}
+              placeholder="Benny Gingi"
+              label="Full name"
+              icon={<User size={15} />}
+              delay="0.2s"
+              error={errors.fullName}
+            />
 
-          <InputField
-            type="text"
-            value={username}
-            onChange={v => { handleUsernameChange(v); clearFieldError("username"); }}
-            placeholder="bennygx"
-            label="Username"
-            icon={<AtSign size={15} />}
-            delay="0.25s"
-            error={errors.username}
-          />
+            <InputField
+              type="text"
+              value={username}
+              onChange={v => { handleUsernameChange(v); clearFieldError("username"); }}
+              placeholder="bennygx"
+              label="Username"
+              icon={<AtSign size={15} />}
+              delay="0.25s"
+              error={errors.username}
+            />
 
-          <InputField
-            type="email"
-            value={email}
-            onChange={v => { setEmail(v); clearFieldError("email"); }}
-            placeholder="you@example.com"
-            label="Email"
-            icon={<Mail size={15} />}
-            delay="0.3s"
-            error={errors.email}
-          />
+            <InputField
+              type="email"
+              value={email}
+              onChange={v => { setEmail(v); clearFieldError("email"); }}
+              placeholder="you@example.com"
+              label="Email"
+              icon={<Mail size={15} />}
+              delay="0.3s"
+              error={errors.email}
+            />
 
-          <InputField
-            type="password"
-            value={password}
-            onChange={v => { setPassword(v); clearFieldError("password"); }}
-            placeholder="••••••••••"
-            label="Password"
-            icon={<Lock size={15} />}
-            delay="0.35s"
-            error={errors.password}
-          />
+            <InputField
+              type="password"
+              value={password}
+              onChange={v => { setPassword(v); clearFieldError("password"); }}
+              placeholder="••••••••••"
+              label="Password"
+              icon={<Lock size={15} />}
+              delay="0.35s"
+              error={errors.password}
+            />
 
-          {/* Submit error */}
-          {submitError && (
-            <div style={{
-              marginBottom: 14, padding: "9px 12px", borderRadius: 8,
-              background: "rgba(255,90,90,0.07)", border: "1px solid rgba(255,90,90,0.18)",
-              fontSize: 12, color: "#FF7B7B",
-              animation: "fade-up 0.3s ease both",
-            }}>
-              {submitError}
-            </div>
-          )}
+            {/* Submit error */}
+            {submitError && (
+              <div style={{
+                marginBottom: 14, padding: "9px 12px", borderRadius: 8,
+                background: "rgba(255,90,90,0.07)", border: "1px solid rgba(255,90,90,0.18)",
+                fontSize: 12, color: "#FF7B7B",
+                animation: "fade-up 0.3s ease both",
+              }}>
+                {submitError}
+              </div>
+            )}
 
-          {/* Submit */}
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            style={{
-              width: "100%", height: 42,
-              background: "var(--accent)", color: "#06080C",
-              border: "none", borderRadius: 8,
-              fontSize: 14, fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer", marginBottom: 22,
-              opacity: loading ? 0.7 : 1,
-              transition: "box-shadow 0.2s, transform 0.1s, opacity 0.15s",
-              fontFamily: "var(--font-dm-sans, sans-serif)",
-              animation: "fade-up 0.5s ease 0.4s both",
-            }}
-            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,212,168,0.4)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; }}
-            onMouseDown={e =>  { if (!loading) (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
-            onMouseUp={e =>    { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
-          >
-            {loading ? "Creating account..." : "Create account →"}
-          </button>
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: "100%", height: 42,
+                background: "var(--accent)", color: "#06080C",
+                border: "none", borderRadius: 8,
+                fontSize: 14, fontWeight: 600,
+                cursor: loading ? "not-allowed" : "pointer", marginBottom: 22,
+                opacity: loading ? 0.7 : 1,
+                transition: "box-shadow 0.2s, transform 0.1s, opacity 0.15s",
+                fontFamily: "var(--font-dm-sans, sans-serif)",
+                animation: "fade-up 0.5s ease 0.4s both",
+              }}
+              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,212,168,0.4)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; }}
+              onMouseDown={e =>  { if (!loading) (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
+              onMouseUp={e =>    { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+            >
+              {loading ? "Creating account..." : "Create account →"}
+            </button>
+          </form>
 
           {/* Footer */}
           <p style={{

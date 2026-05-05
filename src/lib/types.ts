@@ -41,4 +41,7 @@ export interface Conversation {
   isMine: boolean;
   group: boolean;
   groupMembers?: GroupMember[];
+  lastMessage?: string;
+  lastMessageTime?: string;
+  lastMessageSenderId?: string;
 }

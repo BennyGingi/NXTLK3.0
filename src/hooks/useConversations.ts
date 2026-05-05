@@ -26,6 +26,13 @@ type ConvRow = {
   conversation_members: InnerMember[];
 };
 
+type LastMsgRow = {
+  conversation_id: string;
+  content: string;
+  sender_id: string;
+  created_at: string;
+};
+
 // ── Avatar palette (deterministic from id) ───────────────────────────────────
 const PALETTES = [
   { bg: "#1A2D4A", color: "#5BB8FF" },
@@ -144,28 +151,50 @@ export function useConversations(currentUserId: string) {
 
       if (cancelled) return;
 
-      console.log("[useConversations] raw convos:", JSON.stringify(convos, null, 2));
-
       const rows  = (convos ?? []) as unknown as ConvRow[];
       const items = rows.map(r => toConversation(r, currentUserId));
 
-      // Unread counts: messages from others with no read_at
-      let result = items;
-      if (items.length > 0) {
-        const { data: unreadRows } = await supabase
+      // Step 3: batch-fetch unread counts + last messages in parallel
+      const [{ data: unreadRows }, { data: lastMsgRows }] = await Promise.all([
+        supabase
           .from("messages")
           .select("conversation_id")
           .in("conversation_id", convIds)
           .neq("sender_id", currentUserId)
-          .is("read_at", null);
+          .is("read_at", null),
+        supabase
+          .from("messages")
+          .select("conversation_id, content, sender_id, created_at")
+          .in("conversation_id", convIds)
+          .order("created_at", { ascending: false })
+          .limit(Math.max(convIds.length * 5, 50)),
+      ]);
 
-        const unreadMap: Record<string, number> = {};
-        ((unreadRows ?? []) as { conversation_id: string }[]).forEach(r => {
-          unreadMap[r.conversation_id] = (unreadMap[r.conversation_id] ?? 0) + 1;
-        });
+      const unreadMap: Record<string, number> = {};
+      ((unreadRows ?? []) as { conversation_id: string }[]).forEach(r => {
+        unreadMap[r.conversation_id] = (unreadMap[r.conversation_id] ?? 0) + 1;
+      });
 
-        result = items.map(c => ({ ...c, unread: unreadMap[c.id] ?? 0 }));
+      // First occurrence per conversation_id = latest message
+      const lastMsgMap: Record<string, LastMsgRow> = {};
+      for (const row of (lastMsgRows ?? []) as LastMsgRow[]) {
+        if (!lastMsgMap[row.conversation_id]) {
+          lastMsgMap[row.conversation_id] = row;
+        }
       }
+
+      const result = items.map(c => {
+        const lm = lastMsgMap[c.id];
+        return {
+          ...c,
+          unread:              unreadMap[c.id] ?? 0,
+          isMine:              (lm?.sender_id ?? "") === currentUserId,
+          lastMessage:         lm?.content,
+          lastMessageSenderId: lm?.sender_id,
+          lastMessageTime:     lm ? formatConvoTime(lm.created_at) : undefined,
+          time:                lm ? formatConvoTime(lm.created_at) : c.time,
+        };
+      });
 
       if (cancelled) return;
       setConversations(result);

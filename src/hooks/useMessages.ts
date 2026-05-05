@@ -68,7 +68,6 @@ export function useMessages(conversationId: string | null, currentUserId: string
           filter: `conversation_id=eq.${conversationId}`,
         },
         (payload) => {
-          console.log("[useMessages] realtime INSERT:", payload.new);
           if (cancelled) return;
           setMessages(prev => [...prev, toItem(payload.new as RawMessage)]);
           if ((payload.new as RawMessage).sender_id !== currentUserId) {
@@ -109,12 +108,11 @@ export function useMessages(conversationId: string | null, currentUserId: string
   const sendMessage = useCallback(async (content: string) => {
     if (!conversationId || !content.trim()) return;
     const supabase = createClient();
-    const { data, error } = await supabase.from("messages").insert({
+    await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_id:       currentUserId,
       content:         content.trim(),
-    }).select();
-    console.log("[useMessages] sendMessage data:", data, "error:", error);
+    });
   }, [conversationId, currentUserId]);
 
   return { messages, loading, sendMessage };

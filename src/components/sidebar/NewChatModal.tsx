@@ -121,13 +121,12 @@ export default function NewChatModal({ currentUserId, onClose, onConversationCre
     setSearching(true);
     const timer = setTimeout(async () => {
       const supabase = createClient();
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from("profiles")
         .select("id, name, initials, username, avatar_url, status")
         .or(`name.ilike.%${q}%,username.ilike.%${q}%`)
         .neq("id", currentUserId)
         .limit(10);
-      console.log("[NewChatModal] search results:", data, "error:", error);
       setResults((data ?? []) as ProfileResult[]);
       setSearching(false);
     }, 300);

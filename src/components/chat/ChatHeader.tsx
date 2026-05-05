@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Phone, Video, Info } from "lucide-react";
+import { Phone, Video, Info, ArrowLeft } from "lucide-react";
 import type { OnlineStatus } from "@/lib/types";
 import { getDefaultAvatar } from "@/lib/avatar";
 
@@ -11,6 +11,7 @@ interface ChatHeaderProps {
   status: OnlineStatus;
   userId: string;
   avatarUrl?: string;
+  onBack?: () => void;
 }
 
 const STATUS_COLOR: Record<OnlineStatus, string> = {
@@ -46,7 +47,7 @@ function IconBtn({ icon }: { icon: React.ReactNode }) {
   );
 }
 
-export default function ChatHeader({ name, initials, status, userId, avatarUrl }: ChatHeaderProps) {
+export default function ChatHeader({ name, initials, status, userId, avatarUrl, onBack }: ChatHeaderProps) {
   const dotColor = STATUS_COLOR[status];
 
   return (
@@ -56,6 +57,21 @@ export default function ChatHeader({ name, initials, status, userId, avatarUrl }
       background: "var(--bg-surface)",
       borderBottom: "1px solid var(--border)",
     }}>
+      {/* Back button (mobile only) */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          style={{
+            width: 32, height: 32, borderRadius: 7, flexShrink: 0,
+            background: "transparent", border: "none",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", color: "var(--text2)",
+          }}
+        >
+          <ArrowLeft size={18} />
+        </button>
+      )}
+
       {/* Left: avatar + info */}
       <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>

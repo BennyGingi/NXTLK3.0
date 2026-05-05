@@ -250,7 +250,13 @@ export default function ConversationItem({ convo, isActive, onSelect, currentUse
                   fontWeight: convo.unread > 0 ? 600 : 400,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
-                  {convo.preview}
+                  {(() => {
+                    const raw = convo.lastMessage ?? convo.preview;
+                    if (!raw) return null;
+                    const prefix = convo.lastMessageSenderId === currentUserId ? "You: " : "";
+                    const text   = prefix + raw;
+                    return text.length > 35 ? text.slice(0, 35) + "…" : text;
+                  })()}
                 </span>
               )}
             </div>

@@ -110,6 +110,13 @@ export function useConversations(currentUserId: string) {
 
   const refetch = useCallback(() => setTrigger(t => t + 1), []);
 
+  // Clear unread badge immediately after messages are marked read in the chat panel
+  useEffect(() => {
+    const handler = () => refetch();
+    window.addEventListener("messages-read", handler);
+    return () => window.removeEventListener("messages-read", handler);
+  }, [refetch]);
+
   useEffect(() => {
     if (!currentUserId) return;
     const supabase = createClient();
@@ -223,10 +230,21 @@ export function useConversations(currentUserId: string) {
       )
       .subscribe();
 
+    // Realtime: re-fetch sidebar preview when any message is inserted
+    const messagesPreviewChannel = supabase
+      .channel("messages-preview")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages" },
+        () => { fetch(); }
+      )
+      .subscribe();
+
     return () => {
       cancelled = true;
       supabase.removeChannel(membersChannel);
       supabase.removeChannel(presenceChannel);
+      supabase.removeChannel(messagesPreviewChannel);
     };
   }, [currentUserId, trigger]);
 

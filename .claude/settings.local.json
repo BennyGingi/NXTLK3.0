@@ -17,7 +17,10 @@
       "PowerShell(Get-Content \"C:\\\\Users\\\\bennyg\\\\web-projects\\\\nxtlk\\\\.env.local\" | Where-Object { $_ -match \"DATABASE_URL\" })",
       "Bash(npx tsc *)",
       "Bash(Remove-Item *)",
-      "Bash(Get-ChildItem \"C:\\\\Users\\\\bennyg\\\\web-projects\\\\nxtlk\\\\src\\\\app\\\\\\(chat\\)\\\\settings\\\\\" -Recurse | Select-Object FullName *)"
+      "Bash(Get-ChildItem \"C:\\\\Users\\\\bennyg\\\\web-projects\\\\nxtlk\\\\src\\\\app\\\\\\(chat\\)\\\\settings\\\\\" -Recurse | Select-Object FullName *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   },
   "spinnerTipsEnabled": true

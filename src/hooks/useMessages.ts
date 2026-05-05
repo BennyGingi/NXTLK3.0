@@ -41,7 +41,10 @@ export function useMessages(conversationId: string | null, currentUserId: string
         .update({ read_at: new Date().toISOString() })
         .eq("conversation_id", conversationId)
         .neq("sender_id", currentUserId)
-        .is("read_at", null);
+        .is("read_at", null)
+        .then(() => {
+          window.dispatchEvent(new CustomEvent("messages-read"));
+        });
 
     // Initial fetch then mark unread messages from others as read
     supabase

@@ -110,12 +110,17 @@ export function useConversations(currentUserId: string) {
 
   const refetch = useCallback(() => setTrigger(t => t + 1), []);
 
-  // Clear unread badge immediately after messages are marked read in the chat panel
+  // Zero the unread badge instantly when messages are marked read — no refetch needed
   useEffect(() => {
-    const handler = () => refetch();
+    const handler = (e: Event) => {
+      const { conversationId } = (e as CustomEvent<{ conversationId: string }>).detail;
+      setConversations(prev =>
+        prev.map(c => c.id === conversationId ? { ...c, unread: 0 } : c)
+      );
+    };
     window.addEventListener("messages-read", handler);
     return () => window.removeEventListener("messages-read", handler);
-  }, [refetch]);
+  }, []);
 
   useEffect(() => {
     if (!currentUserId) return;

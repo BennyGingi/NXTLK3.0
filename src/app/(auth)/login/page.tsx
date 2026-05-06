@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Mail, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -22,7 +22,43 @@ const BUBBLES = [
   { text: "design looks clean btw 👌",          right: true,  left: "44%", delay: "4s",   dur: "8s"   },
 ];
 
-const STATS = ["12k+ Users", "<80ms Latency", "99.9% Uptime"];
+const STATS        = ["12k+ Users", "<80ms Latency", "99.9% Uptime"];
+const AVATAR_SEEDS = ["alex", "sarah", "mike", "luna", "nova"];
+
+const CHAT_MESSAGES: { user: string; text: string }[] = [
+  { user: "alex",  text: "hey everyone 👋" },
+  { user: "sarah", text: "yo! what's good" },
+  { user: "mike",  text: "just pushed the fix 🔧" },
+  { user: "luna",  text: "finally!! was waiting for that" },
+  { user: "nova",  text: "ship it ship it ship it 🚀" },
+  { user: "jake",  text: "lol calm down nova 😂" },
+  { user: "zara",  text: "the new UI looks insane btw" },
+  { user: "kai",   text: "fr the dark mode is 🔥" },
+  { user: "alex",  text: "benny designed it right?" },
+  { user: "sarah", text: "yeah he's been cooking" },
+  { user: "mike",  text: "merged ✅" },
+  { user: "luna",  text: "let's gooo 🎉" },
+  { user: "nova",  text: "anyone on the call later?" },
+  { user: "jake",  text: "3pm works for me" },
+  { user: "zara",  text: "same, adding to calendar" },
+  { user: "kai",   text: "wait did you see the typing indicator??" },
+  { user: "alex",  text: "bro it's so smooth" },
+  { user: "sarah", text: "the reactions too 👀" },
+  { user: "mike",  text: "this is actually better than slack" },
+  { user: "luna",  text: "don't let slack hear that 😭" },
+  { user: "nova",  text: "too late, already switched" },
+  { user: "jake",  text: "nxtlk > everything" },
+  { user: "zara",  text: "facts 🤝" },
+  { user: "kai",   text: "okay back to work everyone lol" },
+  { user: "alex",  text: "5 more minutes 😅" },
+];
+
+type VisibleMsg = {
+  key: number;
+  user: string;
+  text: string;
+  outgoing: boolean;
+};
 
 function InputField({
   type, value, onChange, placeholder, icon, label, right, delay,
@@ -37,7 +73,6 @@ function InputField({
   delay: string;
 }) {
   const [focused, setFocused] = useState(false);
-
   return (
     <div style={{ marginBottom: 14, animation: `fade-up 0.5s ease ${delay} both` }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
@@ -93,15 +128,203 @@ function RegisteredBanner() {
   );
 }
 
+function FeatureCard({ icon, title, subtitle, delay }: {
+  icon: string; title: string; subtitle: string; delay: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: 1,
+        background: "rgba(255,255,255,0.03)",
+        border: `1px solid ${hovered ? "rgba(0,212,168,0.30)" : "var(--border)"}`,
+        borderRadius: 10,
+        padding: "12px 16px",
+        boxShadow: hovered ? "0 0 16px rgba(0,212,168,0.07)" : "none",
+        transition: "border-color 0.2s, box-shadow 0.2s",
+        animation: `fade-up 0.5s ease ${delay} both`,
+        cursor: "default",
+        display: "flex",
+        flexDirection: "column",
+        gap: 4,
+      }}
+    >
+      <div style={{ fontSize: 20 }}>{icon}</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: "var(--text1)" }}>{title}</div>
+      <div style={{ fontSize: 11, color: "var(--text3)", lineHeight: 1.4 }}>{subtitle}</div>
+    </div>
+  );
+}
+
+function LiveChatMockup() {
+  const [msgs, setMsgs] = useState<VisibleMsg[]>(() =>
+    [0, 1, 2, 3, 4].map(idx => ({
+      key:      idx,
+      user:     CHAT_MESSAGES[idx].user,
+      text:     CHAT_MESSAGES[idx].text,
+      outgoing: idx % 2 === 1,
+    }))
+  );
+  const [showTyping, setShowTyping] = useState(false);
+  const cursorRef = useRef({ idx: 5, key: 5 });
+
+  useEffect(() => {
+    let tid: ReturnType<typeof setTimeout> | undefined;
+    const iv = setInterval(() => {
+      setShowTyping(true);
+      tid = setTimeout(() => {
+        setShowTyping(false);
+        const { idx, key } = cursorRef.current;
+        const def = CHAT_MESSAGES[idx % CHAT_MESSAGES.length];
+        cursorRef.current = { idx: idx + 1, key: key + 1 };
+        setMsgs(prev => [
+          ...prev.slice(-5),
+          { key, user: def.user, text: def.text, outgoing: idx % 2 === 1 },
+        ]);
+      }, 500);
+    }, 1200);
+    return () => {
+      clearInterval(iv);
+      clearTimeout(tid);
+    };
+  }, []);
+
+  return (
+    <div
+      className="chat-mockup"
+      style={{
+        position: "absolute", right: "5%", top: "25%", zIndex: 15,
+        width: 280,
+        background: "var(--bg-surface)",
+        border: "1px solid var(--border-hi)",
+        borderRadius: 16,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
+        transform: "rotate(-2deg)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 14px",
+        borderBottom: "1px solid var(--border)",
+      }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <div style={{
+            width: 26, height: 26, borderRadius: "50%",
+            background: "var(--accent-dim)",
+            border: "1px solid rgba(0,212,168,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 11, fontWeight: 700, color: "var(--accent)",
+          }}>
+            #
+          </div>
+          <div style={{
+            position: "absolute", bottom: -1, right: -1,
+            width: 7, height: 7, borderRadius: "50%",
+            background: "#4ADE80",
+            border: "1.5px solid var(--bg-surface)",
+          }} />
+        </div>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 600, color: "var(--text1)", lineHeight: 1 }}>nxtlk chat</div>
+          <div style={{ fontSize: 9, color: "var(--text3)", marginTop: 2 }}>8 members online</div>
+        </div>
+      </div>
+
+      {/* Scrolling messages */}
+      <div style={{
+        height: 300,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        padding: "8px 12px",
+        gap: 5,
+      }}>
+        {msgs.map(msg => (
+          <div
+            key={msg.key}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: msg.outgoing ? "flex-end" : "flex-start",
+              flexShrink: 0,
+              animation: "chat-bubble-appear 0.3s ease both",
+            }}
+          >
+            {!msg.outgoing && (
+              <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 2 }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.dicebear.com/7.x/bottts/svg?seed=${msg.user}`}
+                  alt={msg.user}
+                  width={24}
+                  height={24}
+                  style={{
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: "var(--bg-active)",
+                    flexShrink: 0,
+                  }}
+                />
+                <span style={{ fontSize: 9, color: "var(--text3)" }}>{msg.user}</span>
+              </div>
+            )}
+            <div style={{
+              padding: "6px 10px",
+              borderRadius: msg.outgoing ? "10px 10px 2px 10px" : "10px 10px 10px 2px",
+              background: msg.outgoing ? "var(--accent-dim)" : "var(--bg-active)",
+              border: msg.outgoing
+                ? "1px solid rgba(0,212,168,0.2)"
+                : "1px solid var(--border)",
+              color: "var(--text1)",
+              fontSize: 11,
+              maxWidth: 200,
+              wordBreak: "break-word",
+              lineHeight: 1.4,
+            }}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+
+        {/* Typing indicator */}
+        {showTyping && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 3,
+            padding: "4px 2px",
+            flexShrink: 0,
+            animation: "chat-bubble-appear 0.2s ease both",
+          }}>
+            {[0, 1, 2].map(i => (
+              <div
+                key={i}
+                style={{
+                  width: 5, height: 5, borderRadius: "50%",
+                  background: "var(--text3)",
+                  animation: `bounce-dot 0.8s ease-in-out ${i * 0.16}s infinite`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
+  const [email,      setEmail]      = useState("");
+  const [password,   setPassword]   = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState<string | null>(null);
+  const [loading,    setLoading]    = useState(false);
+  const [error,      setError]      = useState<string | null>(null);
 
   const handleSignIn = async () => {
-    console.log('submitting...');
     if (!email || !password) { setError("Please enter your email and password."); return; }
     setLoading(true);
     setError(null);
@@ -136,29 +359,40 @@ export default function LoginPage() {
       {/* ── LEFT PANEL ────────────────────────────────────── */}
       <div style={{ flex: "1.1", position: "relative", overflow: "hidden", background: "#06080C" }}>
 
-        {/* Orbs */}
+        {/* Orb 1 — teal, top-left */}
         <div style={{
           position: "absolute", width: 520, height: 520, top: "-8%", left: "-4%",
           background: "radial-gradient(circle, rgba(0,212,168,0.22) 0%, transparent 70%)",
           filter: "blur(80px)", animation: "drift-1 18s ease-in-out infinite",
         }} />
+
+        {/* Orb 2 — blue, bottom-right */}
         <div style={{
           position: "absolute", width: 420, height: 420, bottom: "4%", right: "3%",
           background: "radial-gradient(circle, rgba(0,120,255,0.18) 0%, transparent 70%)",
           filter: "blur(80px)", animation: "drift-2 22s ease-in-out infinite",
         }} />
+
+        {/* Orb 3 — teal, center */}
         <div style={{
           position: "absolute", width: 360, height: 360, top: "38%", left: "38%",
           background: "radial-gradient(circle, rgba(0,212,168,0.13) 0%, transparent 70%)",
           filter: "blur(80px)", animation: "drift-3 15s ease-in-out infinite",
         }} />
 
+        {/* Orb 4 — purple */}
+        <div style={{
+          position: "absolute", width: 300, height: 300, top: "60%", right: "15%",
+          background: "radial-gradient(circle, rgba(100,60,255,0.12) 0%, transparent 70%)",
+          filter: "blur(80px)", animation: "drift-2 20s ease-in-out infinite",
+        }} />
+
         {/* Grid overlay */}
         <div style={{
           position: "absolute", inset: 0,
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), " +
-            "linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)",
+            "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), " +
+            "linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
           backgroundSize: "48px 48px",
         }} />
 
@@ -174,8 +408,15 @@ export default function LoginPage() {
           <rect width="100%" height="100%" filter="url(#grain)" />
         </svg>
 
+        {/* Live chat mockup */}
+        <LiveChatMockup />
+
         {/* Content layer */}
-        <div style={{ position: "relative", zIndex: 10, padding: "40px 48px", height: "100%", display: "flex", flexDirection: "column" }}>
+        <div style={{
+          position: "relative", zIndex: 10,
+          padding: "40px 48px", height: "100%",
+          display: "flex", flexDirection: "column",
+        }}>
 
           {/* Brand mark */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -194,8 +435,8 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Tagline */}
-          <div style={{ marginTop: "auto", marginBottom: 32 }}>
+          {/* Center hero section */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingBottom: 60 }}>
             <h1 style={{
               fontFamily: "var(--font-bricolage, sans-serif)",
               fontSize: 52, fontWeight: 800, lineHeight: 1.1,
@@ -204,9 +445,39 @@ export default function LoginPage() {
               Talk fast.<br />
               <span style={{ color: "var(--accent)" }}>Stay close.</span>
             </h1>
-            <p style={{ marginTop: 16, fontSize: 15, color: "var(--text2)", maxWidth: 360, lineHeight: 1.6 }}>
+            <p style={{ marginTop: 16, marginBottom: 0, fontSize: 15, color: "var(--text2)", maxWidth: 360, lineHeight: 1.6 }}>
               Real-time conversations, calls, and file sharing — all in one place.
             </p>
+
+            {/* Feature cards */}
+            <div style={{ display: "flex", gap: 10, marginTop: 28, maxWidth: 460 }}>
+              <FeatureCard icon="🔒" title="End-to-End Encrypted" subtitle="Your messages stay private"   delay="0.2s"  />
+              <FeatureCard icon="⚡" title="Real-time"            subtitle="Instant delivery, zero lag"   delay="0.35s" />
+              <FeatureCard icon="🌍" title="Works Everywhere"     subtitle="Desktop, tablet, mobile"       delay="0.5s"  />
+            </div>
+
+            {/* Avatar stack + social proof */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 20, animation: "fade-up 0.5s ease 0.65s both" }}>
+              <div style={{ display: "flex" }}>
+                {AVATAR_SEEDS.map((seed, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={seed}
+                    src={`https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`}
+                    alt={seed}
+                    width={32}
+                    height={32}
+                    style={{
+                      width: 32, height: 32, borderRadius: "50%",
+                      border: "2px solid var(--bg-base)",
+                      marginLeft: i > 0 ? -8 : 0,
+                      background: "var(--bg-active)",
+                    }}
+                  />
+                ))}
+              </div>
+              <span style={{ fontSize: 12, color: "var(--text2)" }}>Join 2,400+ users already chatting</span>
+            </div>
           </div>
 
           {/* Floating bubbles */}

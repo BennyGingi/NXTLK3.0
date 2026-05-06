@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import SidebarHeader    from "@/components/sidebar/SidebarHeader";
@@ -36,14 +36,13 @@ export default function ChatClient({ user }: ChatClientProps) {
 
   usePresence(user.id);
   const { conversations, loading: convosLoading, refetch } = useConversations(user.id);
-  const { messages, sendMessage } = useMessages(activeId, user.id);
+  const { messages, sendMessage, toggleReaction, editMessage, deleteMessage } = useMessages(activeId, user.id);
   const { typingNames, sendTyping } = useTyping({
     conversationId:  activeId,
     currentUserId:   user.id,
     currentUserName: user.name,
   });
 
-  // Mobile detection
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
@@ -51,13 +50,11 @@ export default function ChatClient({ user }: ChatClientProps) {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  // Page title unread badge
   useEffect(() => {
     const totalUnread = conversations.reduce((sum, c) => sum + (c.unread || 0), 0);
     document.title = totalUnread > 0 ? `(${totalUnread}) nxtlk` : "nxtlk";
   }, [conversations]);
 
-  // Auto-focus input when conversation changes
   useEffect(() => {
     if (!activeId) return;
     const t = setTimeout(() => inputBarRef.current?.focus(), 50);
@@ -98,7 +95,6 @@ export default function ChatClient({ user }: ChatClientProps) {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
 
-      {/* Sidebar */}
       {renderSidebar && (
         <div style={{
           width: isMobile ? "100%" : 280,
@@ -128,7 +124,6 @@ export default function ChatClient({ user }: ChatClientProps) {
         </div>
       )}
 
-      {/* Main chat area */}
       {renderChat && (
         <div style={{
           flex: 1, minWidth: 0,
@@ -150,6 +145,9 @@ export default function ChatClient({ user }: ChatClientProps) {
               <MessageList
                 messages={messages}
                 currentUserId={user.id}
+                onReact={toggleReaction}
+                onEdit={editMessage}
+                onDelete={deleteMessage}
               />
               <TypingIndicator names={typingNames} />
               <ChatInputBar ref={inputBarRef} onSend={sendMessage} onTyping={sendTyping} />
@@ -216,7 +214,6 @@ export default function ChatClient({ user }: ChatClientProps) {
         </div>
       )}
 
-      {/* New chat modal */}
       {showNewChat && (
         <NewChatModal
           currentUserId={user.id}

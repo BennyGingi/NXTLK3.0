@@ -1,8 +1,14 @@
-"use client";
+﻿"use client";
 
 import { useRef, useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import MessageBubble from "./MessageBubble";
+
+export interface Reaction {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+}
 
 export interface MessageItem {
   id: string;
@@ -10,11 +16,17 @@ export interface MessageItem {
   senderId: string;
   createdAt: string;
   readAt?: string | null;
+  editedAt?: string;
+  deletedAt?: string;
+  reactions?: Reaction[];
 }
 
 interface MessageListProps {
   messages: MessageItem[];
   currentUserId: string;
+  onReact: (messageId: string, emoji: string) => void;
+  onEdit: (messageId: string, newContent: string) => void;
+  onDelete: (messageId: string) => void;
 }
 
 function formatTime(iso: string): string {
@@ -52,9 +64,9 @@ function DayDivider({ label }: { label: string }) {
   );
 }
 
-export default function MessageList({ messages, currentUserId }: MessageListProps) {
-  const containerRef   = useRef<HTMLDivElement>(null);
-  const bottomRef      = useRef<HTMLDivElement>(null);
+export default function MessageList({ messages, currentUserId, onReact, onEdit, onDelete }: MessageListProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const bottomRef    = useRef<HTMLDivElement>(null);
   const [showBtn, setShowBtn] = useState(false);
 
   const distFromBottom = () => {
@@ -79,7 +91,6 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
     }
   }, [messages]);
 
-  // Group consecutive messages by calendar date
   const groups: Array<{ dateKey: string; items: MessageItem[] }> = [];
   for (const msg of messages) {
     const key  = getDateKey(msg.createdAt);
@@ -109,10 +120,17 @@ export default function MessageList({ messages, currentUserId }: MessageListProp
               {items.map(msg => (
                 <MessageBubble
                   key={msg.id}
+                  id={msg.id}
                   content={msg.content}
                   timestamp={formatTime(msg.createdAt)}
                   isOwn={msg.senderId === currentUserId}
                   readAt={msg.readAt}
+                  editedAt={msg.editedAt}
+                  deletedAt={msg.deletedAt}
+                  reactions={msg.reactions}
+                  onReact={onReact}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
                 />
               ))}
             </div>

@@ -1,4 +1,4 @@
-export type OnlineStatus = "online" | "away" | "offline";
+﻿export type OnlineStatus = "online" | "away" | "offline";
 
 export interface User {
   id: string;
@@ -9,6 +9,12 @@ export interface User {
   createdAt: string;
 }
 
+export interface Reaction {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -16,6 +22,9 @@ export interface Message {
   content: string;
   createdAt: string;
   readAt?: string;
+  editedAt?: string;
+  deletedAt?: string;
+  reactions?: Reaction[];
 }
 
 export interface GroupMember {

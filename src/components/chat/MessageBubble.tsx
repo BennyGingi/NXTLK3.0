@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Check, CheckCheck, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Check, CheckCheck, MoreHorizontal, Pencil, Reply, Trash2 } from "lucide-react";
 
 interface Reaction {
   emoji: string;
@@ -18,16 +18,19 @@ interface MessageBubbleProps {
   editedAt?: string;
   deletedAt?: string;
   reactions?: Reaction[];
+  replyToContent?: string | null;
+  replyToSenderName?: string | null;
   onReact: (messageId: string, emoji: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
   onDelete: (messageId: string) => void;
+  onReply: (messageId: string) => void;
 }
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
 export default function MessageBubble({
   id, content, timestamp, isOwn, readAt, editedAt, deletedAt,
-  reactions = [], onReact, onEdit, onDelete,
+  reactions = [], replyToContent, replyToSenderName, onReact, onEdit, onDelete, onReply,
 }: MessageBubbleProps) {
   const [hovered,   setHovered]   = useState(false);
   const [showMenu,  setShowMenu]  = useState(false);
@@ -122,6 +125,20 @@ export default function MessageBubble({
               {emoji}
             </button>
           ))}
+          <button
+            onClick={() => onReply(id)}
+            style={{
+              background: "transparent", border: "none",
+              cursor: "pointer",
+              width: 28, height: 28, borderRadius: 6,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "var(--text2)",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "var(--bg-hover)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+          >
+            <Reply size={14} />
+          </button>
           {isOwn && (
             <div ref={menuRef} style={{ position: "relative" }}>
               <button
@@ -192,6 +209,28 @@ export default function MessageBubble({
         border: isOwn ? "1px solid rgba(0, 212, 168, 0.2)" : "1px solid var(--border)",
         color: "var(--text1)",
       }}>
+        {replyToContent && (
+          <div style={{
+            borderLeft: "2px solid var(--accent)",
+            background: "rgba(0,212,168,0.05)",
+            padding: "4px 8px",
+            borderRadius: "0 4px 4px 0",
+            marginBottom: 6,
+          }}>
+            {replyToSenderName && (
+              <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 600, marginBottom: 2 }}>
+                {replyToSenderName}
+              </div>
+            )}
+            <p style={{
+              margin: 0, fontSize: 11, color: "var(--text2)", lineHeight: 1.4,
+              overflow: "hidden", display: "-webkit-box",
+              WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+            }}>
+              {replyToContent}
+            </p>
+          </div>
+        )}
         {editMode ? (
           <textarea
             ref={inputRef}

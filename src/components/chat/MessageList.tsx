@@ -19,6 +19,9 @@ export interface MessageItem {
   editedAt?: string;
   deletedAt?: string;
   reactions?: Reaction[];
+  replyToId?: string | null;
+  replyToContent?: string | null;
+  replyToSenderName?: string | null;
 }
 
 interface MessageListProps {
@@ -27,6 +30,7 @@ interface MessageListProps {
   onReact: (messageId: string, emoji: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
   onDelete: (messageId: string) => void;
+  onReply: (messageId: string) => void;
 }
 
 function formatTime(iso: string): string {
@@ -64,7 +68,7 @@ function DayDivider({ label }: { label: string }) {
   );
 }
 
-export default function MessageList({ messages, currentUserId, onReact, onEdit, onDelete }: MessageListProps) {
+export default function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onReply }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef    = useRef<HTMLDivElement>(null);
   const [showBtn, setShowBtn] = useState(false);
@@ -128,9 +132,12 @@ export default function MessageList({ messages, currentUserId, onReact, onEdit, 
                   editedAt={msg.editedAt}
                   deletedAt={msg.deletedAt}
                   reactions={msg.reactions}
+                  replyToContent={msg.replyToContent}
+                  replyToSenderName={msg.replyToSenderName}
                   onReact={onReact}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onReply={onReply}
                 />
               ))}
             </div>

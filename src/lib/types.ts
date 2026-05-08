@@ -25,6 +25,9 @@ export interface Message {
   editedAt?: string;
   deletedAt?: string;
   reactions?: Reaction[];
+  replyToId?: string | null;
+  replyToContent?: string | null;
+  replyToSenderName?: string | null;
 }
 
 export interface GroupMember {

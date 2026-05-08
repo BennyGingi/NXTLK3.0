@@ -12,6 +12,11 @@ type RawMessage = {
   read_at: string | null;
   edited_at: string | null;
   deleted_at: string | null;
+  reply_to_id: string | null;
+  messages?: {
+    content: string;
+    profiles?: { name: string } | null;
+  } | null;
 };
 
 type RawReaction = {
@@ -22,14 +27,17 @@ type RawReaction = {
 
 function toItem(m: RawMessage): MessageItem {
   return {
-    id:        m.id,
-    content:   m.content,
-    senderId:  m.sender_id,
-    createdAt: m.created_at,
-    readAt:    m.read_at,
-    editedAt:  m.edited_at  ?? undefined,
-    deletedAt: m.deleted_at ?? undefined,
-    reactions: [],
+    id:                m.id,
+    content:           m.content,
+    senderId:          m.sender_id,
+    createdAt:         m.created_at,
+    readAt:            m.read_at,
+    editedAt:          m.edited_at  ?? undefined,
+    deletedAt:         m.deleted_at ?? undefined,
+    reactions:         [],
+    replyToId:         m.reply_to_id ?? undefined,
+    replyToContent:    m.messages?.content ?? undefined,
+    replyToSenderName: m.messages?.profiles?.name ?? undefined,
   };
 }
 
@@ -63,12 +71,12 @@ export function useMessages(conversationId: string | null, currentUserId: string
 
     supabase
       .from("messages")
-      .select("id, content, sender_id, created_at, read_at, edited_at, deleted_at")
+      .select("id, content, sender_id, created_at, read_at, edited_at, deleted_at, reply_to_id, messages!reply_to_id(content, profiles(name))")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true })
       .then(({ data }) => {
         if (cancelled) return;
-        const items = (data ?? []).map(m => toItem(m as RawMessage));
+        const items = (data ?? []).map(m => toItem(m as unknown as RawMessage));
         setMessages(items);
         setLoading(false);
         messageIdsRef.current = new Set(items.map(i => i.id));
@@ -180,13 +188,14 @@ export function useMessages(conversationId: string | null, currentUserId: string
     });
   }, [messages, reactions, currentUserId]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, replyToId?: string) => {
     if (!conversationId || !content.trim()) return;
     const supabase = createClient();
     await supabase.from("messages").insert({
       conversation_id: conversationId,
       sender_id:       currentUserId,
       content:         content.trim(),
+      reply_to_id:     replyToId ?? null,
     });
   }, [conversationId, currentUserId]);
 

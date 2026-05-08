@@ -2,15 +2,17 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from "react";
 import dynamic from "next/dynamic";
-import { Paperclip, Smile, SendHorizontal } from "lucide-react";
+import { Paperclip, Smile, SendHorizontal, X } from "lucide-react";
 import data from "@emoji-mart/data";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const EmojiPicker = dynamic<any>(() => import("@emoji-mart/react"), { ssr: false });
 
 interface ChatInputBarProps {
-  onSend: (content: string) => void;
+  onSend: (content: string, replyToId?: string) => void;
   onTyping?: () => void;
+  replyTo?: { id: string; content: string; senderName: string } | null;
+  onCancelReply?: () => void;
 }
 
 export interface ChatInputBarHandle {
@@ -40,7 +42,7 @@ function IconBtn({ onClick, children }: { onClick?: () => void; children: React.
 }
 
 const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(
-  function ChatInputBar({ onSend, onTyping }, ref) {
+  function ChatInputBar({ onSend, onTyping, replyTo, onCancelReply }, ref) {
     const [value,      setValue]     = useState("");
     const [focused,    setFocused]   = useState(false);
     const [showPicker, setShowPicker] = useState(false);
@@ -79,7 +81,7 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(
     const submit = () => {
       const trimmed = value.trim();
       if (!trimmed) return;
-      onSend(trimmed);
+      onSend(trimmed, replyTo?.id);
       setValue("");
       if (textareaRef.current) textareaRef.current.style.height = "36px";
     };
@@ -112,6 +114,40 @@ const ChatInputBar = forwardRef<ChatInputBarHandle, ChatInputBarProps>(
           </div>
         )}
 
+        {replyTo && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "6px 16px 6px 12px",
+            background: "var(--bg-surface)",
+            borderTop: "1px solid var(--border)",
+            borderLeft: "3px solid var(--accent)",
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600, marginBottom: 1 }}>
+                {replyTo.senderName}
+              </div>
+              <div style={{
+                fontSize: 12, color: "var(--text2)",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {replyTo.content}
+              </div>
+            </div>
+            <button
+              onClick={onCancelReply}
+              style={{
+                background: "transparent", border: "none",
+                cursor: "pointer", color: "var(--text3)",
+                display: "flex", alignItems: "center",
+                padding: 2, borderRadius: 4, flexShrink: 0,
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--text3)"; }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
           padding: "12px 16px",

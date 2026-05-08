@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import SidebarHeader    from "@/components/sidebar/SidebarHeader";
 import SearchBar        from "@/components/sidebar/SearchBar";
 import ConversationList from "@/components/sidebar/ConversationList";
@@ -32,6 +32,7 @@ export default function ChatClient({ user }: ChatClientProps) {
   const [showNewChat, setShowNewChat] = useState(false);
   const [isMobile,    setIsMobile]    = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [replyTo,     setReplyTo]     = useState<{ id: string; content: string; senderName: string } | null>(null);
   const inputBarRef = useRef<ChatInputBarHandle>(null);
 
   usePresence(user.id);
@@ -57,6 +58,7 @@ export default function ChatClient({ user }: ChatClientProps) {
 
   useEffect(() => {
     if (!activeId) return;
+    setReplyTo(null);
     const t = setTimeout(() => inputBarRef.current?.focus(), 50);
     return () => clearTimeout(t);
   }, [activeId]);
@@ -71,6 +73,19 @@ export default function ChatClient({ user }: ChatClientProps) {
   }, [query, conversations]);
 
   const activeConvo = conversations.find(c => c.id === activeId) ?? null;
+
+  const handleReply = useCallback((messageId: string) => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg) return;
+    const senderName = msg.senderId === user.id ? user.name : (activeConvo?.name ?? 'User');
+    setReplyTo({ id: messageId, content: msg.content, senderName });
+    setTimeout(() => inputBarRef.current?.focus(), 50);
+  }, [messages, user.id, user.name, activeConvo]);
+
+  const handleSend = useCallback((content: string, replyToId?: string) => {
+    sendMessage(content, replyToId);
+    setReplyTo(null);
+  }, [sendMessage]);
 
   const handleSelect = (id: string) => {
     setActiveId(id);
@@ -148,9 +163,16 @@ export default function ChatClient({ user }: ChatClientProps) {
                 onReact={toggleReaction}
                 onEdit={editMessage}
                 onDelete={deleteMessage}
+                onReply={handleReply}
               />
               <TypingIndicator names={typingNames} />
-              <ChatInputBar ref={inputBarRef} onSend={sendMessage} onTyping={sendTyping} />
+              <ChatInputBar
+                ref={inputBarRef}
+                onSend={handleSend}
+                onTyping={sendTyping}
+                replyTo={replyTo}
+                onCancelReply={() => setReplyTo(null)}
+              />
             </>
           ) : (
             <div style={{

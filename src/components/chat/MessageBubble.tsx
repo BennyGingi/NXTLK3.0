@@ -26,13 +26,14 @@ interface MessageBubbleProps {
   onDelete: (messageId: string) => void;
   onReply: (messageId: string) => void;
   onQuoteClick?: (replyToId: string) => void;
+  bubbleRef?: (el: HTMLDivElement | null) => void;
 }
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
 export default function MessageBubble({
   id, content, timestamp, isOwn, readAt, editedAt, deletedAt,
-  reactions = [], replyToId, replyToContent, replyToSenderName, onReact, onEdit, onDelete, onReply, onQuoteClick,
+  reactions = [], replyToId, replyToContent, replyToSenderName, onReact, onEdit, onDelete, onReply, onQuoteClick, bubbleRef,
 }: MessageBubbleProps) {
   const [hovered,   setHovered]   = useState(false);
   const [showMenu,  setShowMenu]  = useState(false);
@@ -203,14 +204,17 @@ export default function MessageBubble({
         </div>
       )}
 
-      <div style={{
-        maxWidth: "65%",
-        padding: "10px 14px",
-        borderRadius: isOwn ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
-        background: isOwn ? "var(--accent-dim)" : "var(--bg-surface)",
-        border: isOwn ? "1px solid rgba(0, 212, 168, 0.2)" : "1px solid var(--border)",
-        color: "var(--text1)",
-      }}>
+      <div
+        ref={bubbleRef}
+        style={{
+          maxWidth: "65%",
+          padding: "10px 14px",
+          borderRadius: isOwn ? "12px 12px 2px 12px" : "12px 12px 12px 2px",
+          background: isOwn ? "var(--accent-dim)" : "var(--bg-surface)",
+          border: isOwn ? "1px solid rgba(0, 212, 168, 0.2)" : "1px solid var(--border)",
+          color: "var(--text1)",
+        }}
+      >
         {replyToContent && (
           <div
             onClick={() => replyToId && onQuoteClick?.(replyToId)}

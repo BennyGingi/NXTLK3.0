@@ -84,7 +84,7 @@ function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onRep
     scrollToMessage(id: string) {
       const el = messageRefs.current.get(id);
       if (!el) return;
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       el.classList.remove('message-highlight');
       void el.offsetWidth;
       el.classList.add('message-highlight');
@@ -130,9 +130,10 @@ function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onRep
       <div
         ref={containerRef}
         onScroll={handleScroll}
+        className="message-list-scroll"
         style={{
           position: "absolute", inset: 0,
-          overflowY: "auto", padding: 16,
+          overflowY: "auto", overflowX: "hidden", padding: 16,
           display: "flex", flexDirection: "column", gap: 2,
         }}
       >
@@ -141,10 +142,7 @@ function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onRep
             <DayDivider label={formatDayLabel(dateKey)} />
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {items.map(msg => (
-                <div
-                  key={msg.id}
-                  ref={el => { if (el) messageRefs.current.set(msg.id, el); else messageRefs.current.delete(msg.id); }}
-                >
+                <div key={msg.id}>
                   <MessageBubble
                     id={msg.id}
                     content={msg.content}
@@ -162,6 +160,7 @@ function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onRep
                     onDelete={onDelete}
                     onReply={onReply}
                     onQuoteClick={onQuoteClick}
+                    bubbleRef={el => { if (el) messageRefs.current.set(msg.id, el); else messageRefs.current.delete(msg.id); }}
                   />
                 </div>
               ))}

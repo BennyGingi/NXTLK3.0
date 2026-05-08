@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Mail, Lock } from "lucide-react";
+import { ArrowLeft, Mail, Lock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 function GitHubIcon() {
@@ -324,6 +324,12 @@ export default function LoginPage() {
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState<string | null>(null);
 
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail,        setForgotEmail]        = useState("");
+  const [forgotLoading,      setForgotLoading]      = useState(false);
+  const [forgotError,        setForgotError]        = useState<string | null>(null);
+  const [forgotSent,         setForgotSent]         = useState(false);
+
   const handleSignIn = async () => {
     if (!email || !password) { setError("Please enter your email and password."); return; }
     setLoading(true);
@@ -341,6 +347,18 @@ export default function LoginPage() {
       localStorage.setItem("nxtlk_login_time", Date.now().toString());
       window.location.replace("/chat");
     }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail) { setForgotError("Please enter your email address."); return; }
+    setForgotLoading(true);
+    setForgotError(null);
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+      redirectTo: "https://nxtlk3.gingi2603.workers.dev/auth/reset-password",
+    });
+    if (resetError) { setForgotError(resetError.message); setForgotLoading(false); }
+    else { setForgotSent(true); setForgotLoading(false); }
   };
 
   const handleOAuth = async (provider: "google" | "github") => {
@@ -537,162 +555,251 @@ export default function LoginPage() {
         {/* Form */}
         <div style={{ width: "100%", padding: "0 48px" }}>
 
-          {/* Eyebrow */}
-          <div style={{
-            fontSize: 10, fontWeight: 600, letterSpacing: "0.15em",
-            color: "var(--accent)", textTransform: "uppercase", marginBottom: 12,
-            animation: "fade-up 0.5s ease 0.05s both",
-          }}>
-            — Secure sign in
-          </div>
-
-          {/* Heading */}
-          <h2 style={{
-            fontFamily: "var(--font-bricolage, sans-serif)",
-            fontSize: 34, fontWeight: 700, lineHeight: 1.15,
-            color: "var(--text1)", margin: "0 0 6px 0",
-            animation: "fade-up 0.5s ease 0.1s both",
-          }}>
-            Welcome<br />
-            <span style={{ color: "var(--accent)" }}>back.</span>
-          </h2>
-
-          {/* Subtext */}
-          <p style={{
-            fontSize: 13, color: "var(--text2)", marginBottom: 28,
-            animation: "fade-up 0.5s ease 0.15s both",
-          }}>
-            Your conversations are waiting for you.
-          </p>
-
-          <form onSubmit={e => { e.preventDefault(); handleSignIn(); }}>
-            <InputField
-              type="email" value={email} onChange={setEmail}
-              placeholder="you@example.com" label="Email"
-              icon={<Mail size={15} />} delay="0.2s"
-            />
-
-            <InputField
-              type="password" value={password} onChange={setPassword}
-              placeholder="••••••••" label="Password"
-              icon={<Lock size={15} />} delay="0.25s"
-              right={
-                <button type="button" style={{ fontSize: 11, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-                  Forgot it?
-                </button>
-              }
-            />
-
-            {/* Remember Me */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8, marginBottom: 16,
-              animation: "fade-up 0.5s ease 0.28s both",
-            }}>
-              <input
-                id="remember-me"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={e => setRememberMe(e.target.checked)}
-                style={{ width: 15, height: 15, cursor: "pointer", accentColor: "var(--accent)" }}
-              />
-              <label
-                htmlFor="remember-me"
-                style={{ fontSize: 12.5, color: "var(--text2)", cursor: "pointer", userSelect: "none" }}
+          {showForgotPassword ? (
+            <>
+              {/* Back button */}
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(false); setForgotEmail(""); setForgotError(null); setForgotSent(false); }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6,
+                  background: "none", border: "none", cursor: "pointer",
+                  color: "var(--text2)", fontSize: 12.5, padding: 0, marginBottom: 28,
+                  animation: "fade-up 0.3s ease both",
+                }}
               >
-                Remember me
-              </label>
-            </div>
+                <ArrowLeft size={14} /> Back to sign in
+              </button>
 
-            {/* Registration success */}
-            <Suspense fallback={null}>
-              <RegisteredBanner />
-            </Suspense>
-
-            {/* Error */}
-            {error && (
-              <div style={{
-                marginBottom: 14, padding: "9px 12px", borderRadius: 8,
-                background: "rgba(255,90,90,0.07)", border: "1px solid rgba(255,90,90,0.18)",
-                fontSize: 12, color: "#FF7B7B",
-                animation: "fade-up 0.3s ease both",
+              <h2 style={{
+                fontFamily: "var(--font-bricolage, sans-serif)",
+                fontSize: 34, fontWeight: 700, lineHeight: 1.15,
+                color: "var(--text1)", margin: "0 0 6px 0",
+                animation: "fade-up 0.3s ease 0.05s both",
               }}>
-                {error}
+                Reset<br />
+                <span style={{ color: "var(--accent)" }}>password.</span>
+              </h2>
+
+              <p style={{
+                fontSize: 13, color: "var(--text2)", marginBottom: 28,
+                animation: "fade-up 0.3s ease 0.1s both",
+              }}>
+                Enter your email and we&apos;ll send you a reset link.
+              </p>
+
+              {forgotSent ? (
+                <div style={{
+                  padding: "14px 16px", borderRadius: 8,
+                  background: "rgba(0,212,168,0.07)", border: "1px solid rgba(0,212,168,0.25)",
+                  fontSize: 13, color: "var(--accent)", lineHeight: 1.6,
+                  animation: "fade-up 0.3s ease both",
+                }}>
+                  Check your inbox! We sent a reset link to <strong>{forgotEmail}</strong>.
+                </div>
+              ) : (
+                <form onSubmit={e => { e.preventDefault(); handleForgotPassword(); }}>
+                  <InputField
+                    type="email" value={forgotEmail} onChange={setForgotEmail}
+                    placeholder="you@example.com" label="Email"
+                    icon={<Mail size={15} />} delay="0.15s"
+                  />
+
+                  {forgotError && (
+                    <div style={{
+                      marginBottom: 14, padding: "9px 12px", borderRadius: 8,
+                      background: "rgba(255,90,90,0.07)", border: "1px solid rgba(255,90,90,0.18)",
+                      fontSize: 12, color: "#FF7B7B",
+                      animation: "fade-up 0.3s ease both",
+                    }}>
+                      {forgotError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    style={{
+                      width: "100%", height: 42,
+                      background: "var(--accent)", color: "#06080C",
+                      border: "none", borderRadius: 8,
+                      fontSize: 14, fontWeight: 600,
+                      cursor: forgotLoading ? "not-allowed" : "pointer",
+                      opacity: forgotLoading ? 0.7 : 1,
+                      transition: "box-shadow 0.2s, transform 0.1s, opacity 0.15s",
+                      fontFamily: "var(--font-dm-sans, sans-serif)",
+                      animation: "fade-up 0.3s ease 0.2s both",
+                    }}
+                    onMouseEnter={e => { if (!forgotLoading) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,212,168,0.4)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; }}
+                    onMouseDown={e =>  { if (!forgotLoading) (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
+                    onMouseUp={e =>    { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+                  >
+                    {forgotLoading ? "Sending..." : "Send reset link →"}
+                  </button>
+                </form>
+              )}
+            </>
+          ) : (
+            <>
+              {/* Eyebrow */}
+              <div style={{
+                fontSize: 10, fontWeight: 600, letterSpacing: "0.15em",
+                color: "var(--accent)", textTransform: "uppercase", marginBottom: 12,
+                animation: "fade-up 0.5s ease 0.05s both",
+              }}>
+                — Secure sign in
               </div>
-            )}
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%", height: 42,
-                background: "var(--accent)", color: "#06080C",
-                border: "none", borderRadius: 8,
-                fontSize: 14, fontWeight: 600,
-                cursor: loading ? "not-allowed" : "pointer", marginBottom: 22,
-                opacity: loading ? 0.7 : 1,
-                transition: "box-shadow 0.2s, transform 0.1s, opacity 0.15s",
-                fontFamily: "var(--font-dm-sans, sans-serif)",
-                animation: "fade-up 0.5s ease 0.3s both",
-              }}
-              onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,212,168,0.4)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; }}
-              onMouseDown={e =>  { if (!loading) (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
-              onMouseUp={e =>    { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
-            >
-              {loading ? "Signing in..." : "Sign in →"}
-            </button>
-          </form>
+              {/* Heading */}
+              <h2 style={{
+                fontFamily: "var(--font-bricolage, sans-serif)",
+                fontSize: 34, fontWeight: 700, lineHeight: 1.15,
+                color: "var(--text1)", margin: "0 0 6px 0",
+                animation: "fade-up 0.5s ease 0.1s both",
+              }}>
+                Welcome<br />
+                <span style={{ color: "var(--accent)" }}>back.</span>
+              </h2>
 
-          {/* OR divider */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 12, marginBottom: 16,
-            animation: "fade-up 0.5s ease 0.35s both",
-          }}>
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-            <span style={{ fontSize: 11, color: "var(--text3)", fontWeight: 500 }}>OR</span>
-            <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
-          </div>
+              {/* Subtext */}
+              <p style={{
+                fontSize: 13, color: "var(--text2)", marginBottom: 28,
+                animation: "fade-up 0.5s ease 0.15s both",
+              }}>
+                Your conversations are waiting for you.
+              </p>
 
-          {/* OAuth */}
-          <div style={{ display: "flex", gap: 10, marginBottom: 28, animation: "fade-up 0.5s ease 0.4s both" }}>
-            {[
-              {
-                label: "Google",
-                icon: (
-                  <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-                  </svg>
-                ),
-              },
-              { label: "GitHub", icon: <GitHubIcon /> },
-            ].map(({ label, icon }) => (
-              <OAuthButton
-                key={label}
-                label={label}
-                icon={icon}
-                onClick={() => handleOAuth(label === "Google" ? "google" : "github")}
-                disabled={loading}
-              />
-            ))}
-          </div>
+              <form onSubmit={e => { e.preventDefault(); handleSignIn(); }}>
+                <InputField
+                  type="email" value={email} onChange={setEmail}
+                  placeholder="you@example.com" label="Email"
+                  icon={<Mail size={15} />} delay="0.2s"
+                />
 
-          {/* Footer */}
-          <p style={{
-            textAlign: "center", fontSize: 12.5, color: "var(--text2)",
-            animation: "fade-up 0.5s ease 0.45s both",
-          }}>
-            No account yet?{" "}
-            <a
-              href="/register"
-              style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}
-            >
-              Create one free
-            </a>
-          </p>
+                <InputField
+                  type="password" value={password} onChange={setPassword}
+                  placeholder="••••••••" label="Password"
+                  icon={<Lock size={15} />} delay="0.25s"
+                  right={
+                    <button type="button" onClick={() => setShowForgotPassword(true)} style={{ fontSize: 11, color: "var(--accent)", background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+                      Forgot it?
+                    </button>
+                  }
+                />
+
+                {/* Remember Me */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 8, marginBottom: 16,
+                  animation: "fade-up 0.5s ease 0.28s both",
+                }}>
+                  <input
+                    id="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    style={{ width: 15, height: 15, cursor: "pointer", accentColor: "var(--accent)" }}
+                  />
+                  <label
+                    htmlFor="remember-me"
+                    style={{ fontSize: 12.5, color: "var(--text2)", cursor: "pointer", userSelect: "none" }}
+                  >
+                    Remember me
+                  </label>
+                </div>
+
+                {/* Registration success */}
+                <Suspense fallback={null}>
+                  <RegisteredBanner />
+                </Suspense>
+
+                {/* Error */}
+                {error && (
+                  <div style={{
+                    marginBottom: 14, padding: "9px 12px", borderRadius: 8,
+                    background: "rgba(255,90,90,0.07)", border: "1px solid rgba(255,90,90,0.18)",
+                    fontSize: 12, color: "#FF7B7B",
+                    animation: "fade-up 0.3s ease both",
+                  }}>
+                    {error}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: "100%", height: 42,
+                    background: "var(--accent)", color: "#06080C",
+                    border: "none", borderRadius: 8,
+                    fontSize: 14, fontWeight: 600,
+                    cursor: loading ? "not-allowed" : "pointer", marginBottom: 22,
+                    opacity: loading ? 0.7 : 1,
+                    transition: "box-shadow 0.2s, transform 0.1s, opacity 0.15s",
+                    fontFamily: "var(--font-dm-sans, sans-serif)",
+                    animation: "fade-up 0.5s ease 0.3s both",
+                  }}
+                  onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,212,168,0.4)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; }}
+                  onMouseDown={e =>  { if (!loading) (e.currentTarget as HTMLButtonElement).style.transform = "scale(0.98)"; }}
+                  onMouseUp={e =>    { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+                >
+                  {loading ? "Signing in..." : "Sign in →"}
+                </button>
+              </form>
+
+              {/* OR divider */}
+              <div style={{
+                display: "flex", alignItems: "center", gap: 12, marginBottom: 16,
+                animation: "fade-up 0.5s ease 0.35s both",
+              }}>
+                <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+                <span style={{ fontSize: 11, color: "var(--text3)", fontWeight: 500 }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
+              </div>
+
+              {/* OAuth */}
+              <div style={{ display: "flex", gap: 10, marginBottom: 28, animation: "fade-up 0.5s ease 0.4s both" }}>
+                {[
+                  {
+                    label: "Google",
+                    icon: (
+                      <svg width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                      </svg>
+                    ),
+                  },
+                  { label: "GitHub", icon: <GitHubIcon /> },
+                ].map(({ label, icon }) => (
+                  <OAuthButton
+                    key={label}
+                    label={label}
+                    icon={icon}
+                    onClick={() => handleOAuth(label === "Google" ? "google" : "github")}
+                    disabled={loading}
+                  />
+                ))}
+              </div>
+
+              {/* Footer */}
+              <p style={{
+                textAlign: "center", fontSize: 12.5, color: "var(--text2)",
+                animation: "fade-up 0.5s ease 0.45s both",
+              }}>
+                No account yet?{" "}
+                <a
+                  href="/register"
+                  style={{ color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}
+                >
+                  Create one free
+                </a>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

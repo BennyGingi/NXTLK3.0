@@ -11,6 +11,7 @@ type RawReplyMessage = {
 
 type RawMessage = {
   id: string;
+  conversation_id: string;
   content: string;
   sender_id: string;
   created_at: string;
@@ -132,14 +133,18 @@ export function useMessages(conversationId: string | null, currentUserId: string
       )
       .subscribe();
 
+    // No server-side filter on UPDATE: Supabase applies UPDATE filters against the
+    // OLD row, which with REPLICA IDENTITY DEFAULT only has the primary key — so
+    // filtering on conversation_id would never match and no events would arrive.
     const updateChannel = supabase
       .channel(`messages-updates:${conversationId}`)
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
+        { event: "UPDATE", schema: "public", table: "messages" },
         (payload) => {
           if (cancelled) return;
           const updated = payload.new as RawMessage;
+          if (updated.conversation_id !== conversationId) return;
           setMessages(prev =>
             prev.map(m => m.id === updated.id
               ? {

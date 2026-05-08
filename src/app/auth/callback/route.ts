@@ -25,6 +25,35 @@ export async function GET(request: NextRequest) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: existingProfile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single()
+
+        if (!existingProfile) {
+          const name = user.user_metadata?.full_name
+            ?? user.user_metadata?.name
+            ?? user.email?.split('@')[0]
+            ?? 'User'
+          const username = user.user_metadata?.username
+            ?? user.email?.split('@')[0]
+            ?? 'user'
+          const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+
+          await supabase.from('profiles').insert({
+            id: user.id,
+            name,
+            username,
+            initials,
+            avatar_url: user.user_metadata?.avatar_url ?? null,
+            status: 'offline'
+          })
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

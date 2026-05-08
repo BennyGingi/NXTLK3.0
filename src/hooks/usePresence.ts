@@ -1,30 +1,51 @@
 "use client";
-
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export function usePresence(userId: string) {
+  const statusRef = useRef<"online" | "away" | "offline">("offline");
+
   useEffect(() => {
     if (!userId) return;
     const supabase = createClient();
 
-    const setStatus = (status: "online" | "away" | "offline") =>
-      supabase.from("profiles").update({ status }).eq("id", userId);
+    const setStatus = async (status: "online" | "away" | "offline") => {
+      if (statusRef.current === status) return;
+      statusRef.current = status;
+      await supabase
+        .from('profiles')
+        .update({ status })
+        .eq('id', userId)
+        .select();
+    };
 
     setStatus("online");
 
-    const handleVisibilityChange = () =>
-      setStatus(document.visibilityState === "hidden" ? "away" : "online");
+    const handleVisibility = () => {
+      if (document.hidden) setStatus("away");
+      else setStatus("online");
+    };
 
-    const handleBeforeUnload = () => setStatus("offline");
+    const handleActivity = () => {
+      if (statusRef.current === "away") setStatus("online");
+    };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
+    const awayTimer = setInterval(() => {
+      // handled by visibility
+    }, 60000);
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("mousemove", handleActivity);
+    window.addEventListener("keydown", handleActivity);
+
+    window.addEventListener("beforeunload", () => setStatus("offline"));
 
     return () => {
       setStatus("offline");
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("mousemove", handleActivity);
+      window.removeEventListener("keydown", handleActivity);
+      clearInterval(awayTimer);
     };
   }, [userId]);
 }

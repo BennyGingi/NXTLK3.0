@@ -3,6 +3,11 @@ main = ".open-next/worker.js"
 compatibility_date = "2026-05-08"
 compatibility_flags = ["nodejs_compat"]
 
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = "https://adowrjkpfzxpomxpwvlu.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY = "sb_publishable_ITuS0iNZK5eGltg9MM0eFQ_TOzis_qy"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_ITuS0iNZK5eGltg9MM0eFQ_TOzis_qy"
+
 [assets]
 directory = ".open-next/assets"
 binding = "ASSETS"

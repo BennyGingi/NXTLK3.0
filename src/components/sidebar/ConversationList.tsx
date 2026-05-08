@@ -52,7 +52,7 @@ export default function ConversationList({
 
   if (loading) {
     return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "4px 6px" }}>
+      <div className="message-list-scroll" style={{ flex: 1, overflowY: "auto", padding: "4px 6px" }}>
         {Array.from({ length: 4 }).map((_, i) => <SkeletonItem key={i} />)}
       </div>
     );
@@ -81,7 +81,7 @@ export default function ConversationList({
   const recent = convos.filter(c => !c.pinned);
 
   return (
-    <div style={{ flex: 1, overflowY: "auto", padding: "4px 6px", scrollbarWidth: "none" }}>
+    <div className="message-list-scroll" style={{ flex: 1, overflowY: "auto", padding: "4px 6px" }}>
 
       {pinned.length > 0 && (
         <>

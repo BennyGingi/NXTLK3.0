@@ -18,19 +18,21 @@ interface MessageBubbleProps {
   editedAt?: string;
   deletedAt?: string;
   reactions?: Reaction[];
+  replyToId?: string | null;
   replyToContent?: string | null;
   replyToSenderName?: string | null;
   onReact: (messageId: string, emoji: string) => void;
   onEdit: (messageId: string, newContent: string) => void;
   onDelete: (messageId: string) => void;
   onReply: (messageId: string) => void;
+  onQuoteClick?: (replyToId: string) => void;
 }
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
 export default function MessageBubble({
   id, content, timestamp, isOwn, readAt, editedAt, deletedAt,
-  reactions = [], replyToContent, replyToSenderName, onReact, onEdit, onDelete, onReply,
+  reactions = [], replyToId, replyToContent, replyToSenderName, onReact, onEdit, onDelete, onReply, onQuoteClick,
 }: MessageBubbleProps) {
   const [hovered,   setHovered]   = useState(false);
   const [showMenu,  setShowMenu]  = useState(false);
@@ -210,14 +212,17 @@ export default function MessageBubble({
         color: "var(--text1)",
       }}>
         {replyToContent && (
-          <div style={{
-            borderLeft: '2px solid var(--accent)',
-            background: 'rgba(0,212,168,0.06)',
-            borderRadius: '6px',
-            padding: '5px 10px',
-            marginBottom: '6px',
-            cursor: 'pointer',
-          }}>
+          <div
+            onClick={() => replyToId && onQuoteClick?.(replyToId)}
+            style={{
+              borderLeft: '2px solid var(--accent)',
+              background: 'rgba(0,212,168,0.06)',
+              borderRadius: '6px',
+              padding: '5px 10px',
+              marginBottom: '6px',
+              cursor: 'pointer',
+            }}
+          >
             <div style={{
               fontSize: 10,
               fontWeight: 600,

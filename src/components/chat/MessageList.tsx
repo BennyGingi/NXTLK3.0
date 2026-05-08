@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from "react";
 import { ChevronDown } from "lucide-react";
 import MessageBubble from "./MessageBubble";
 
@@ -24,6 +24,10 @@ export interface MessageItem {
   replyToSenderName?: string | null;
 }
 
+export interface MessageListHandle {
+  scrollToMessage: (id: string) => void;
+}
+
 interface MessageListProps {
   messages: MessageItem[];
   currentUserId: string;
@@ -31,6 +35,7 @@ interface MessageListProps {
   onEdit: (messageId: string, newContent: string) => void;
   onDelete: (messageId: string) => void;
   onReply: (messageId: string) => void;
+  onQuoteClick?: (replyToId: string) => void;
 }
 
 function formatTime(iso: string): string {
@@ -68,10 +73,24 @@ function DayDivider({ label }: { label: string }) {
   );
 }
 
-export default function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onReply }: MessageListProps) {
+const MessageList = forwardRef<MessageListHandle, MessageListProps>(
+function MessageList({ messages, currentUserId, onReact, onEdit, onDelete, onReply, onQuoteClick }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef    = useRef<HTMLDivElement>(null);
+  const messageRefs  = useRef<Map<string, HTMLDivElement>>(new Map());
   const [showBtn, setShowBtn] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    scrollToMessage(id: string) {
+      const el = messageRefs.current.get(id);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.remove('message-highlight');
+      void el.offsetWidth;
+      el.classList.add('message-highlight');
+      setTimeout(() => el.classList.remove('message-highlight'), 2000);
+    },
+  }));
 
   const distFromBottom = () => {
     const el = containerRef.current;
@@ -122,23 +141,29 @@ export default function MessageList({ messages, currentUserId, onReact, onEdit, 
             <DayDivider label={formatDayLabel(dateKey)} />
             <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {items.map(msg => (
-                <MessageBubble
+                <div
                   key={msg.id}
-                  id={msg.id}
-                  content={msg.content}
-                  timestamp={formatTime(msg.createdAt)}
-                  isOwn={msg.senderId === currentUserId}
-                  readAt={msg.readAt}
-                  editedAt={msg.editedAt}
-                  deletedAt={msg.deletedAt}
-                  reactions={msg.reactions}
-                  replyToContent={msg.replyToContent}
-                  replyToSenderName={msg.replyToSenderName}
-                  onReact={onReact}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onReply={onReply}
-                />
+                  ref={el => { if (el) messageRefs.current.set(msg.id, el); else messageRefs.current.delete(msg.id); }}
+                >
+                  <MessageBubble
+                    id={msg.id}
+                    content={msg.content}
+                    timestamp={formatTime(msg.createdAt)}
+                    isOwn={msg.senderId === currentUserId}
+                    readAt={msg.readAt}
+                    editedAt={msg.editedAt}
+                    deletedAt={msg.deletedAt}
+                    reactions={msg.reactions}
+                    replyToId={msg.replyToId}
+                    replyToContent={msg.replyToContent}
+                    replyToSenderName={msg.replyToSenderName}
+                    onReact={onReact}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onReply={onReply}
+                    onQuoteClick={onQuoteClick}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -165,4 +190,6 @@ export default function MessageList({ messages, currentUserId, onReact, onEdit, 
       )}
     </div>
   );
-}
+});
+
+export default MessageList;

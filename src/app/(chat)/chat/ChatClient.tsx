@@ -7,7 +7,7 @@ import ConversationList from "@/components/sidebar/ConversationList";
 import SidebarFooter    from "@/components/sidebar/SidebarFooter";
 import NewChatModal     from "@/components/sidebar/NewChatModal";
 import ChatHeader        from "@/components/chat/ChatHeader";
-import MessageList       from "@/components/chat/MessageList";
+import MessageList, { type MessageListHandle } from "@/components/chat/MessageList";
 import ChatInputBar, { type ChatInputBarHandle } from "@/components/chat/ChatInputBar";
 import TypingIndicator   from "@/components/chat/TypingIndicator";
 import { useConversations } from "@/hooks/useConversations";
@@ -33,7 +33,8 @@ export default function ChatClient({ user }: ChatClientProps) {
   const [isMobile,    setIsMobile]    = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
   const [replyTo,     setReplyTo]     = useState<{ id: string; content: string; senderName: string } | null>(null);
-  const inputBarRef = useRef<ChatInputBarHandle>(null);
+  const inputBarRef    = useRef<ChatInputBarHandle>(null);
+  const messageListRef = useRef<MessageListHandle>(null);
 
   usePresence(user.id);
   const { conversations, loading: convosLoading, refetch } = useConversations(user.id);
@@ -158,12 +159,14 @@ export default function ChatClient({ user }: ChatClientProps) {
                 onBack={isMobile ? handleBack : undefined}
               />
               <MessageList
+                ref={messageListRef}
                 messages={messages}
                 currentUserId={user.id}
                 onReact={toggleReaction}
                 onEdit={editMessage}
                 onDelete={deleteMessage}
                 onReply={handleReply}
+                onQuoteClick={(id) => messageListRef.current?.scrollToMessage(id)}
               />
               <TypingIndicator names={typingNames} />
               <ChatInputBar

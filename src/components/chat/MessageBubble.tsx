@@ -40,6 +40,12 @@ export default function MessageBubble({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    if (replyToContent !== undefined && replyToContent !== null) {
+      console.log('[MessageBubble] reply props received:', { id, replyToContent, replyToSenderName });
+    }
+  }, [id, replyToContent, replyToSenderName]);
+
+  useEffect(() => {
     if (!showMenu) return;
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {

@@ -4,6 +4,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { MessageItem } from "@/components/chat/MessageList";
 
+type RawReplyMessage = {
+  content: string;
+  profiles?: { name: string } | { name: string }[] | null;
+};
+
 type RawMessage = {
   id: string;
   content: string;
@@ -13,10 +18,8 @@ type RawMessage = {
   edited_at: string | null;
   deleted_at: string | null;
   reply_to_id: string | null;
-  messages?: {
-    content: string;
-    profiles?: { name: string } | null;
-  } | null;
+  // Supabase returns joined rows as arrays even for to-one FK relationships
+  messages?: RawReplyMessage | RawReplyMessage[] | null;
 };
 
 type RawReaction = {
@@ -26,6 +29,14 @@ type RawReaction = {
 };
 
 function toItem(m: RawMessage): MessageItem {
+  const replyRaw   = Array.isArray(m.messages) ? m.messages[0] : m.messages;
+  const profileRaw = replyRaw?.profiles;
+  const profileName = Array.isArray(profileRaw) ? profileRaw[0]?.name : profileRaw?.name;
+
+  if (m.reply_to_id) {
+    console.log('[useMessages] reply raw data:', JSON.stringify(m.messages), '→ content:', replyRaw?.content, 'name:', profileName);
+  }
+
   return {
     id:                m.id,
     content:           m.content,
@@ -36,8 +47,8 @@ function toItem(m: RawMessage): MessageItem {
     deletedAt:         m.deleted_at ?? undefined,
     reactions:         [],
     replyToId:         m.reply_to_id ?? undefined,
-    replyToContent:    m.messages?.content ?? undefined,
-    replyToSenderName: m.messages?.profiles?.name ?? undefined,
+    replyToContent:    replyRaw?.content ?? undefined,
+    replyToSenderName: profileName ?? undefined,
   };
 }
 

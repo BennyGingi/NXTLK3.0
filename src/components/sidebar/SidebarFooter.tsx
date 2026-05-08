@@ -71,19 +71,16 @@ export default function SidebarFooter({ user, onSettings }: SidebarFooterProps) 
   const dotColor      = STATUS_COLOR[currentStatus];
 
   useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel("own-status")
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        (payload) => {
-          setCurrentStatus(payload.new.status as OnlineStatus);
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user.id]);
+    setCurrentStatus("online");
+
+    const handleVisibility = () => {
+      if (document.hidden) setCurrentStatus("away");
+      else setCurrentStatus("online");
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
 
   useEffect(() => {
     if (!open) return;

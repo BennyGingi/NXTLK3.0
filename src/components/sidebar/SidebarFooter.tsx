@@ -63,11 +63,27 @@ function MenuRow({
 }
 
 export default function SidebarFooter({ user, onSettings }: SidebarFooterProps) {
-  const [open, setOpen]           = useState(false);
+  const [open, setOpen]             = useState(false);
   const [btnHovered, setBtnHovered] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<OnlineStatus>(user.status);
   const router        = useRouter();
   const containerRef  = useRef<HTMLDivElement>(null);
-  const dotColor      = STATUS_COLOR[user.status];
+  const dotColor      = STATUS_COLOR[currentStatus];
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("own-status")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
+        (payload) => {
+          setCurrentStatus(payload.new.status as OnlineStatus);
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user.id]);
 
   useEffect(() => {
     if (!open) return;
@@ -195,7 +211,7 @@ export default function SidebarFooter({ user, onSettings }: SidebarFooterProps) 
               background: dotColor, flexShrink: 0,
             }} />
             <span style={{ fontSize: 11, color: dotColor }}>
-              {STATUS_LABEL[user.status]}
+              {STATUS_LABEL[currentStatus]}
             </span>
           </div>
         </div>

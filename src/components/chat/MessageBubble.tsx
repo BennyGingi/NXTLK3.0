@@ -216,6 +216,9 @@ export default function MessageBubble({
         color: "var(--text1)",
       }}>
         {replyToContent && (
+          <div style={{color: 'red'}}>REPLY: {replyToContent}</div>
+        )}
+        {replyToContent && (
           <div style={{
             borderLeft: "2px solid var(--accent)",
             background: "rgba(0,212,168,0.05)",
@@ -230,8 +233,10 @@ export default function MessageBubble({
             )}
             <p style={{
               margin: 0, fontSize: 11, color: "var(--text2)", lineHeight: 1.4,
-              overflow: "hidden", display: "-webkit-box",
-              WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
             }}>
               {replyToContent}
             </p>

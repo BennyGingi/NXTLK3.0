@@ -1,4 +1,5 @@
 name = "nxtlk"
+pages_build_output_dir = ".open-next/assets"
 compatibility_date = "2026-05-08"
 compatibility_flags = ["nodejs_compat"]
 main = ".open-next/worker.js"

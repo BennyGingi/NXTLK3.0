@@ -40,12 +40,6 @@ export default function MessageBubble({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (replyToContent !== undefined && replyToContent !== null) {
-      console.log('[MessageBubble] reply props received:', { id, replyToContent, replyToSenderName });
-    }
-  }, [id, replyToContent, replyToSenderName]);
-
-  useEffect(() => {
     if (!showMenu) return;
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -216,30 +210,32 @@ export default function MessageBubble({
         color: "var(--text1)",
       }}>
         {replyToContent && (
-          <div style={{color: 'red'}}>REPLY: {replyToContent}</div>
-        )}
-        {replyToContent && (
           <div style={{
-            borderLeft: "2px solid var(--accent)",
-            background: "rgba(0,212,168,0.05)",
-            padding: "4px 8px",
-            borderRadius: "0 4px 4px 0",
-            marginBottom: 6,
+            borderLeft: '2px solid var(--accent)',
+            background: 'rgba(0,212,168,0.06)',
+            borderRadius: '6px',
+            padding: '5px 10px',
+            marginBottom: '6px',
+            cursor: 'pointer',
           }}>
-            {replyToSenderName && (
-              <div style={{ fontSize: 10, color: "var(--accent)", fontWeight: 600, marginBottom: 2 }}>
-                {replyToSenderName}
-              </div>
-            )}
-            <p style={{
-              margin: 0, fontSize: 11, color: "var(--text2)", lineHeight: 1.4,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
+            <div style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: 'var(--accent)',
+              marginBottom: 2,
+            }}>
+              ↩ {replyToSenderName}
+            </div>
+            <div style={{
+              fontSize: 11,
+              color: 'var(--text2)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              maxWidth: '100%',
             }}>
               {replyToContent}
-            </p>
+            </div>
           </div>
         )}
         {editMode ? (

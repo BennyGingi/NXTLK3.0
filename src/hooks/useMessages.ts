@@ -33,10 +33,6 @@ function toItem(m: RawMessage): MessageItem {
   const profileRaw = replyRaw?.profiles;
   const profileName = Array.isArray(profileRaw) ? profileRaw[0]?.name : profileRaw?.name;
 
-  if (m.reply_to_id) {
-    console.log('[useMessages] reply raw data:', JSON.stringify(m.messages), '→ content:', replyRaw?.content, 'name:', profileName);
-  }
-
   return {
     id:                m.id,
     content:           m.content,
@@ -110,11 +106,27 @@ export function useMessages(conversationId: string | null, currentUserId: string
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
+        async (payload) => {
           if (cancelled) return;
           const msg = payload.new as RawMessage;
+          const newItem = toItem(msg);
+
+          if (msg.reply_to_id) {
+            const { data: replyMsg } = await supabase
+              .from('messages')
+              .select('content, profiles(name)')
+              .eq('id', msg.reply_to_id)
+              .single();
+            if (cancelled) return;
+            const reply = replyMsg as RawReplyMessage | null;
+            const profileRaw = reply?.profiles;
+            const profileName = Array.isArray(profileRaw) ? profileRaw[0]?.name : profileRaw?.name;
+            newItem.replyToContent    = reply?.content    ?? undefined;
+            newItem.replyToSenderName = profileName       ?? undefined;
+          }
+
           messageIdsRef.current.add(msg.id);
-          setMessages(prev => [...prev, toItem(msg)]);
+          setMessages(prev => [...prev, newItem]);
           if (msg.sender_id !== currentUserId) markAsRead();
         }
       )

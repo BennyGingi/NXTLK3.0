@@ -5,9 +5,18 @@ import Link from "next/link";
 import {
   User, Shield, Palette, ArrowLeft,
   Camera, Check, AlertCircle, Eye, EyeOff,
+  Sun, Moon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { getDefaultAvatar } from "@/lib/avatar";
+import { useThemeContext } from "@/context/ThemeContext";
+import {
+  ACCENT_COLORS,
+  BACKGROUNDS,
+  type AccentColor,
+  type ChatBackground,
+  type AppMode,
+} from "@/lib/theme";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -635,26 +644,186 @@ function SecuritySection() {
 
 // ── Appearance section ────────────────────────────────────────────────────────
 
+function ModePill({
+  mode, label, icon, active, onClick,
+}: {
+  mode: AppMode; label: string; icon: React.ReactNode; active: boolean; onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        flex: 1, height: 40,
+        display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+        background: active ? "var(--accent-dim)" : hovered ? "var(--bg-hover)" : "var(--bg-active)",
+        border: active ? "1px solid var(--accent)" : "1px solid var(--border)",
+        borderRadius: 8,
+        color: active ? "var(--accent)" : "var(--text2)",
+        fontSize: 13, fontWeight: 500,
+        cursor: "pointer",
+        transition: "background 0.15s, border-color 0.15s, color 0.15s",
+        fontFamily: "var(--font-dm-sans, sans-serif)",
+      }}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function AccentCircle({
+  color, hex, active, onClick,
+}: {
+  color: AccentColor; hex: string; active: boolean; onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={ACCENT_COLORS[color].label}
+      style={{
+        width: 32, height: 32,
+        borderRadius: "50%",
+        background: hex,
+        border: "none",
+        cursor: "pointer",
+        boxShadow: active
+          ? `0 0 0 2px var(--bg-surface), 0 0 0 4px ${hex}`
+          : hovered
+          ? `0 0 0 2px var(--bg-surface), 0 0 0 3px ${hex}`
+          : "none",
+        transition: "box-shadow 0.15s, transform 0.1s",
+        transform: hovered ? "scale(1.1)" : "scale(1)",
+      }}
+    />
+  );
+}
+
+function BackgroundThumbnail({
+  bgKey, label, file, active, onClick,
+}: {
+  bgKey: ChatBackground; label: string; file: string | null; active: boolean; onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        width: "100%", height: 64,
+        borderRadius: 8,
+        overflow: "hidden",
+        cursor: "pointer",
+        border: active ? "2px solid var(--accent)" : "2px solid transparent",
+        background: file ? "transparent" : "var(--bg-active)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: 0,
+        transition: "border-color 0.15s, transform 0.1s",
+        transform: hovered ? "scale(1.02)" : "scale(1)",
+      }}
+    >
+      {file ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={file}
+          alt={label}
+          style={{
+            width: "100%", height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      ) : (
+        <span style={{ fontSize: 12, color: "var(--text3)" }}>None</span>
+      )}
+    </button>
+  );
+}
+
 function AppearanceSection() {
+  const { theme, updateTheme } = useThemeContext();
+
   return (
     <div>
       <SectionHeading title="Appearance" subtitle="Customise the look and feel of nxtlk" />
+
+      {/* Mode */}
+      <div style={{ marginBottom: 28 }}>
+        <Label>Mode</Label>
+        <div style={{ display: "flex", gap: 10 }}>
+          <ModePill
+            mode="dark"
+            label="Dark"
+            icon={<Moon size={15} />}
+            active={theme.mode === "dark"}
+            onClick={() => updateTheme({ mode: "dark" })}
+          />
+          <ModePill
+            mode="light"
+            label="Light"
+            icon={<Sun size={15} />}
+            active={theme.mode === "light"}
+            onClick={() => updateTheme({ mode: "light" })}
+          />
+        </div>
+      </div>
+
+      <Divider />
+
+      {/* Accent color */}
+      <div style={{ marginBottom: 28 }}>
+        <Label>Accent color</Label>
+        <div style={{ display: "flex", gap: 10 }}>
+          {(Object.keys(ACCENT_COLORS) as AccentColor[]).map((color) => (
+            <AccentCircle
+              key={color}
+              color={color}
+              hex={ACCENT_COLORS[color].hex}
+              active={theme.accent === color}
+              onClick={() => updateTheme({ accent: color })}
+            />
+          ))}
+        </div>
+      </div>
+
+      <Divider />
+
+      {/* Chat background */}
+      <div style={{ marginBottom: 28 }}>
+        <Label>Chat background</Label>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 8,
+        }}>
+          {(Object.keys(BACKGROUNDS) as ChatBackground[]).map((bgKey) => (
+            <BackgroundThumbnail
+              key={bgKey}
+              bgKey={bgKey}
+              label={BACKGROUNDS[bgKey].label}
+              file={BACKGROUNDS[bgKey].file}
+              active={theme.chatBackground === bgKey}
+              onClick={() => updateTheme({ chatBackground: bgKey })}
+            />
+          ))}
+        </div>
+      </div>
+
       <div style={{
-        padding: "40px 24px",
-        borderRadius: 10,
-        background: "var(--bg-surface)",
-        border: "1px solid var(--border)",
-        display: "flex", flexDirection: "column",
-        alignItems: "center", justifyContent: "center",
-        textAlign: "center", gap: 8,
+        padding: "12px 16px",
+        borderRadius: 8,
+        background: "rgba(0,212,168,0.05)",
+        border: "1px solid rgba(0,212,168,0.15)",
+        fontSize: 12,
+        color: "var(--text2)",
+        lineHeight: 1.5,
       }}>
-        <Palette size={32} style={{ color: "var(--text3)", marginBottom: 4 }} />
-        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--text2)" }}>
-          Theme customisation coming soon
-        </div>
-        <div style={{ fontSize: 12.5, color: "var(--text3)", maxWidth: 300, lineHeight: 1.6 }}>
-          Dark mode, accent colours, font size and compact mode will be configurable here.
-        </div>
+        Changes are applied instantly and saved automatically.
       </div>
     </div>
   );

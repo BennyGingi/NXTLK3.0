@@ -15,6 +15,8 @@ import { useMessages }       from "@/hooks/useMessages";
 import { usePresence }       from "@/hooks/usePresence";
 import { useTyping }         from "@/hooks/useTyping";
 import { useNotifications }  from "@/hooks/useNotifications";
+import { useThemeContext }   from "@/context/ThemeContext";
+import { BACKGROUNDS }       from "@/lib/theme";
 
 interface ChatClientProps {
   user: {
@@ -38,7 +40,9 @@ export default function ChatClient({ user }: ChatClientProps) {
   const messageListRef = useRef<MessageListHandle>(null);
 
   usePresence(user.id);
+  const { theme } = useThemeContext();
   const { showNotification } = useNotifications(user.id, activeId);
+  const bgFile = BACKGROUNDS[theme.chatBackground]?.file;
   const { conversations, loading: convosLoading, refetch } = useConversations(user.id);
   const { messages, sendMessage, toggleReaction, editMessage, deleteMessage } = useMessages(activeId, user.id, showNotification);
   const { typingNames, sendTyping } = useTyping({
@@ -160,17 +164,28 @@ export default function ChatClient({ user }: ChatClientProps) {
                 avatarUrl={activeConvo.avatarUrl}
                 onBack={isMobile ? handleBack : undefined}
               />
-              <MessageList
-                ref={messageListRef}
-                messages={messages}
-                currentUserId={user.id}
-                onReact={toggleReaction}
-                onEdit={editMessage}
-                onDelete={deleteMessage}
-                onReply={handleReply}
-                onQuoteClick={(id) => messageListRef.current?.scrollToMessage(id)}
-              />
-              <TypingIndicator names={typingNames} />
+              <div style={{
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                backgroundImage: bgFile ? `url(${bgFile})` : undefined,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundAttachment: "local",
+              }}>
+                <MessageList
+                  ref={messageListRef}
+                  messages={messages}
+                  currentUserId={user.id}
+                  onReact={toggleReaction}
+                  onEdit={editMessage}
+                  onDelete={deleteMessage}
+                  onReply={handleReply}
+                  onQuoteClick={(id) => messageListRef.current?.scrollToMessage(id)}
+                />
+                <TypingIndicator names={typingNames} />
+              </div>
               <ChatInputBar
                 ref={inputBarRef}
                 onSend={handleSend}

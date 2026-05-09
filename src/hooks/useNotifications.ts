@@ -21,6 +21,11 @@ export function useNotifications(
       if (Notification.permission !== "granted") return;
       if (!document.hidden && activeConversationId === conversationId) return;
 
+      // Show bullet dot in title when tab is hidden
+      if (document.hidden) {
+        document.title = "(•) nxtlk";
+      }
+
       const notification = new Notification(senderName, {
         body: content.length > 60 ? content.slice(0, 60) + "..." : content,
         icon: "/favicon.ico",

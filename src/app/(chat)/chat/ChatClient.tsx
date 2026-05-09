@@ -10,10 +10,11 @@ import ChatHeader        from "@/components/chat/ChatHeader";
 import MessageList, { type MessageListHandle } from "@/components/chat/MessageList";
 import ChatInputBar, { type ChatInputBarHandle } from "@/components/chat/ChatInputBar";
 import TypingIndicator   from "@/components/chat/TypingIndicator";
-import { useConversations } from "@/hooks/useConversations";
-import { useMessages }      from "@/hooks/useMessages";
-import { usePresence }      from "@/hooks/usePresence";
-import { useTyping }        from "@/hooks/useTyping";
+import { useConversations }  from "@/hooks/useConversations";
+import { useMessages }       from "@/hooks/useMessages";
+import { usePresence }       from "@/hooks/usePresence";
+import { useTyping }         from "@/hooks/useTyping";
+import { useNotifications }  from "@/hooks/useNotifications";
 
 interface ChatClientProps {
   user: {
@@ -37,8 +38,9 @@ export default function ChatClient({ user }: ChatClientProps) {
   const messageListRef = useRef<MessageListHandle>(null);
 
   usePresence(user.id);
+  const { showNotification } = useNotifications(user.id, activeId);
   const { conversations, loading: convosLoading, refetch } = useConversations(user.id);
-  const { messages, sendMessage, toggleReaction, editMessage, deleteMessage } = useMessages(activeId, user.id);
+  const { messages, sendMessage, toggleReaction, editMessage, deleteMessage } = useMessages(activeId, user.id, showNotification);
   const { typingNames, sendTyping } = useTyping({
     conversationId:  activeId,
     currentUserId:   user.id,

@@ -49,7 +49,11 @@ function toItem(m: RawMessage): MessageItem {
   };
 }
 
-export function useMessages(conversationId: string | null, currentUserId: string) {
+export function useMessages(
+  conversationId: string | null,
+  currentUserId: string,
+  onNewMessage?: (senderName: string, content: string, conversationId: string) => void
+) {
   const [messages,  setMessages]  = useState<MessageItem[]>([]);
   const [reactions, setReactions] = useState<RawReaction[]>([]);
   const [loading,   setLoading]   = useState(false);
@@ -128,7 +132,17 @@ export function useMessages(conversationId: string | null, currentUserId: string
 
           messageIdsRef.current.add(msg.id);
           setMessages(prev => [...prev, newItem]);
-          if (msg.sender_id !== currentUserId) markAsRead();
+          if (msg.sender_id !== currentUserId) {
+            markAsRead();
+            if (onNewMessage) {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("name")
+                .eq("id", msg.sender_id)
+                .single();
+              onNewMessage(profile?.name ?? "Someone", msg.content, conversationId);
+            }
+          }
         }
       )
       .subscribe();
@@ -198,7 +212,7 @@ export function useMessages(conversationId: string | null, currentUserId: string
       supabase.removeChannel(rxInsertChannel);
       supabase.removeChannel(rxDeleteChannel);
     };
-  }, [conversationId, currentUserId]);
+  }, [conversationId, currentUserId, onNewMessage]);
 
   const messagesWithReactions = useMemo(() => {
     return messages.map(m => {
